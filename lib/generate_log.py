@@ -1,19 +1,53 @@
+import argparse
 from datetime import datetime
-import os
+import requests
 
-def generate_log(data):
-    # TODO: Implement log generation logic
+def fetch_data():
+    try:
+        response = requests.get("https://jsonplaceholder.typicode.com/posts/1", timeout=5)
+        if response.status_code == 200:
+            return response.json()
+    except requests.RequestException:
+        pass
+    return {}
 
-    # STEP 1: Validate input
-    # Hint: Check if data is a list
+def generate_log(log_data=None):
+    if log_data is None:
+        log_data = ["User logged in", "User updated profile", "Report exported"]
+        
+    if not isinstance(log_data, list):
+        raise TypeError("Log data must be a list")
 
-    # STEP 2: Generate a filename with today's date (e.g., "log_20250408.txt")
-    # Hint: Use datetime.now().strftime("%Y%m%d")
+    filename = f"log_{datetime.now().strftime('%Y%m%d')}.txt"
 
-    # STEP 3: Write the log entries to a file using File I/O
-    # Use a with open() block and write each line from the data list
-    # Example: file.write(f"{entry}\n")
+    with open(filename, "w") as file:
+        for entry in log_data:
+            file.write(f"{entry}\n")
 
-    # STEP 4: Print a confirmation message with the filename
+    print(f"Log written to {filename}")
+    return filename
 
-    pass
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Automating Python Projects CLI Tool")
+    subparsers = parser.add_subparsers(dest="command")
+    
+    add_parser = subparsers.add_parser("add-task", help="Simulate adding a task")
+    add_parser.add_argument("name", help="Name of the task")
+    
+    complete_parser = subparsers.add_parser("complete-task", help="Simulate completing a task")
+    complete_parser.add_argument("name", help="Name of the task")
+    
+    args = parser.parse_args()
+    
+    post = fetch_data()
+    api_title = post.get("title", "No title found")
+    print("Fetched Post Title:", api_title)
+    
+    if args.command == "add-task":
+        custom_entries = [f"Add task command executed for: {args.name}", f"Context: {api_title}"]
+        generate_log(custom_entries)
+    elif args.command == "complete-task":
+        custom_entries = [f"Complete task command executed for: {args.name}"]
+        generate_log(custom_entries)
+    else:
+        generate_log()
